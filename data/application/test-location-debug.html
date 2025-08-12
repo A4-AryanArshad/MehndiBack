@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Location Debug Test</title>
+</head>
+<body>
+    <h1>Location Debug Test</h1>
+    
+    <div>
+        <h3>Current Form State:</h3>
+        <div id="formState"></div>
+    </div>
+    
+    <div>
+        <h3>Location Detection Test:</h3>
+        <button onclick="testLocationDetection()">Test Location Detection</button>
+        <div id="locationResult"></div>
+    </div>
+    
+    <div>
+        <h3>Form Submission Test:</h3>
+        <button onclick="testFormSubmission()">Test Form Submission</button>
+        <div id="submissionResult"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://e-back-bice.vercel.app';
+        
+        // Simulate form state
+        let form = {
+            company: 'Test Company',
+            email: 'test@example.com',
+            phone: '1234567890',
+            address: 'Test Address',
+            socialType: 'Facebook',
+            socialLink: 'https://example.com',
+            industry: 'Local Contractors',
+            description: 'Test description',
+            city: '',
+            state: '',
+            country: ''
+        };
+        
+        function updateFormState() {
+            document.getElementById('formState').innerHTML = `
+                <pre>${JSON.stringify(form, null, 2)}</pre>
+            `;
+        }
+        
+        async function testLocationDetection() {
+            try {
+                const response = await fetch(`${API_BASE}/api/directory/nearby`);
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Location API response:', data);
+                    
+                    if (data.userLocation && data.userLocation.city !== 'Unknown') {
+                        form.city = data.userLocation.city || '';
+                        form.state = data.userLocation.state || '';
+                        form.country = data.userLocation.country || '';
+                        
+                        document.getElementById('locationResult').innerHTML = `
+                            <div style="color: green;">
+                                ✅ Location detected successfully!<br>
+                                City: ${form.city}<br>
+                                State: ${form.state}<br>
+                                Country: ${form.country}
+                            </div>
+                        `;
+                    } else {
+                        document.getElementById('locationResult').innerHTML = `
+                            <div style="color: orange;">
+                                ⚠️ No valid location data from API
+                            </div>
+                        `;
+                    }
+                    updateFormState();
+                } else {
+                    document.getElementById('locationResult').innerHTML = `
+                        <div style="color: red;">
+                            ❌ Location API failed: ${response.status}
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                document.getElementById('locationResult').innerHTML = `
+                    <div style="color: red;">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        async function testFormSubmission() {
+            try {
+                console.log('Form data before submission:', form);
+                const formData = new FormData();
+                
+                Object.keys(form).forEach(key => {
+                    if (form[key] !== null && form[key] !== '') {
+                        formData.append(key, form[key]);
+                        console.log(`Adding to FormData: ${key} = ${form[key]}`);
+                    }
+                });
+                
+                // Log all FormData entries
+                console.log('Final FormData contents:');
+                for (let [key, value] of formData.entries()) {
+                    console.log(`  ${key}: ${value}`);
+                }
+                
+                document.getElementById('submissionResult').innerHTML = `
+                    <div style="color: blue;">
+                        📋 FormData prepared with ${formData.entries().length} entries<br>
+                        Check browser console for details
+                    </div>
+                `;
+                
+            } catch (error) {
+                document.getElementById('submissionResult').innerHTML = `
+                    <div style="color: red;">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+        
+        // Initialize
+        updateFormState();
+    </script>
+</body>
+</html> 
